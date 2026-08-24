@@ -33,15 +33,10 @@ body {
   background: #ffffff;
   color: #111827;
   box-sizing: border-box;
-  margin: 0 auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
 }
 
-/* Fit-to-width scaling of the sheet on screen only. */
-.cv-scale {
-  transform: scale(var(--cv-scale, 1));
-  transform-origin: top center;
-}
+/* Fit-to-width scaling is applied inline by CvPreview.vue (transform + frame). */
 
 /* ---------- Print / PDF export ---------- */
 @page {

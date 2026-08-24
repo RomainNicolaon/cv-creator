@@ -9,6 +9,8 @@ const { exportJson, importJson } = useCvIo()
 const jsonInput = ref<HTMLInputElement | null>(null)
 const toast = ref('')
 const editorTab = ref<'content' | 'style'>('content')
+// Mobile-only pane toggle (editor vs. preview); ignored on lg+ where both show.
+const mobileView = ref<'editor' | 'preview'>('editor')
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 function showToast(message: string) {
@@ -85,6 +87,12 @@ function confirmClear() {
   if (confirm('Vider tous les champs ?')) clear()
 }
 
+// When switching to the preview on mobile, its container becomes visible again
+// so its width changes: recompute the fit-to-width scale.
+watch(mobileView, () => {
+  nextTick(updateScale)
+})
+
 onMounted(() => {
   load()
   updateScale()
@@ -104,19 +112,19 @@ onBeforeUnmount(() => {
   <div class="flex h-screen flex-col bg-slate-950 text-gray-100">
     <!-- Top bar -->
     <header
-      class="no-print flex flex-wrap items-center justify-between gap-3 border-b border-gray-800 bg-slate-900 px-5 py-3"
+      class="no-print flex flex-wrap items-center justify-between gap-2 border-b border-gray-800 bg-slate-900 px-3 py-2 sm:gap-3 sm:px-5 sm:py-3"
     >
-      <div>
-        <h1 class="text-lg font-bold">
+      <div class="min-w-0">
+        <h1 class="text-base font-bold sm:text-lg">
           CV Creator
           <span class="text-blue-400">PDF</span>
         </h1>
-        <p class="text-xs text-gray-400">
+        <p class="hidden text-xs text-gray-400 sm:block">
           Choisissez un thème, éditez vos informations, exportez en PDF.
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
         <input
           ref="jsonInput"
           type="file"
@@ -125,45 +133,45 @@ onBeforeUnmount(() => {
           @change="onJsonFile"
         />
         <button
-          class="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
+          class="rounded-md border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:bg-gray-800 sm:px-3 sm:py-2 sm:text-sm"
           @click="confirmClear"
         >
           Vider
         </button>
         <button
-          class="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
+          class="rounded-md border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:bg-gray-800 sm:px-3 sm:py-2 sm:text-sm"
           @click="confirmReset"
         >
           Réinitialiser
         </button>
-        <span class="mx-1 h-5 w-px bg-gray-700" />
+        <span class="mx-1 hidden h-5 w-px bg-gray-700 sm:block" />
         <button
-          class="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
+          class="rounded-md border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:bg-gray-800 sm:px-3 sm:py-2 sm:text-sm"
           title="Importer un CV depuis un fichier JSON"
           @click="triggerImport"
         >
-          ⬆ Importer JSON
+          ⬆<span class="hidden sm:inline"> Importer</span> JSON
         </button>
         <button
-          class="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
+          class="rounded-md border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:bg-gray-800 sm:px-3 sm:py-2 sm:text-sm"
           title="Exporter le CV (avec photo) au format JSON"
           @click="exportJson"
         >
-          ⬇ Exporter JSON
+          ⬇<span class="hidden sm:inline"> Exporter</span> JSON
         </button>
-        <span class="mx-1 h-5 w-px bg-gray-700" />
+        <span class="mx-1 hidden h-5 w-px bg-gray-700 sm:block" />
         <button
-          class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+          class="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 sm:px-4 sm:py-2 sm:text-sm"
           @click="downloadPdf"
         >
-          ⬇ Télécharger le PDF
+          ⬇<span class="hidden sm:inline"> Télécharger le</span> PDF
         </button>
       </div>
     </header>
 
     <!-- Theme picker -->
     <div
-      class="no-print flex items-center gap-4 overflow-x-auto border-b border-gray-800 bg-slate-900/70 px-5 py-2"
+      class="no-print flex items-center gap-3 overflow-x-auto border-b border-gray-800 bg-slate-900/70 px-3 py-2 sm:gap-4 sm:px-5"
     >
       <span class="shrink-0 text-xs font-medium uppercase tracking-wide text-gray-500">Thème</span>
       <div v-for="group in themeGroups" :key="group.name" class="flex shrink-0 items-center gap-2">
@@ -189,10 +197,33 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Main -->
-    <div class="flex min-h-0 flex-1">
+    <div class="flex min-h-0 flex-1 flex-col lg:flex-row">
+      <!-- Mobile pane toggle (Éditeur / Aperçu) -->
+      <div class="no-print flex shrink-0 border-b border-gray-800 bg-slate-900 lg:hidden">
+        <button
+          class="flex-1 px-4 py-2 text-sm font-medium transition-colors"
+          :class="mobileView === 'editor'
+            ? 'border-b-2 border-blue-500 text-white'
+            : 'text-gray-400 hover:text-gray-200'"
+          @click="mobileView = 'editor'"
+        >
+          Éditeur
+        </button>
+        <button
+          class="flex-1 px-4 py-2 text-sm font-medium transition-colors"
+          :class="mobileView === 'preview'
+            ? 'border-b-2 border-blue-500 text-white'
+            : 'text-gray-400 hover:text-gray-200'"
+          @click="mobileView = 'preview'"
+        >
+          Aperçu
+        </button>
+      </div>
+
       <!-- Editor -->
       <aside
-        class="no-print flex w-full max-w-md shrink-0 flex-col overflow-hidden border-r border-gray-800 bg-slate-900"
+        class="no-print min-h-0 w-full flex-1 flex-col overflow-hidden border-gray-800 bg-slate-900 lg:flex lg:max-w-md lg:flex-none lg:border-r"
+        :class="mobileView === 'editor' ? 'flex' : 'hidden'"
       >
         <div class="flex shrink-0 border-b border-gray-800">
           <button
@@ -223,7 +254,8 @@ onBeforeUnmount(() => {
       <!-- Preview -->
       <main
         ref="previewWrap"
-        class="preview-pane flex-1 overflow-auto bg-slate-800 p-6"
+        class="preview-pane min-h-0 flex-1 overflow-auto bg-slate-800 p-3 sm:p-6 lg:block"
+        :class="mobileView === 'preview' ? 'block' : 'hidden'"
       >
         <ClientOnly>
           <CvPreview :cv="cv" :theme="theme" :scale="scale" />

@@ -21,6 +21,9 @@ Petit générateur de CV en **PDF** construit avec **Nuxt 3**. Choisissez un th�
   - **Police** (thème / sans / serif / mono) et **densité** (compact / normal /
     confort) pour tenir sur une page.
 - 👁️ Aperçu au format A4 mis à l'échelle en temps réel.
+- 📱 **Interface entièrement responsive** : sur mobile/tablette, un onglet
+  **Éditeur / Aperçu** bascule entre l'édition et l'aperçu ; sur grand écran,
+  les deux s'affichent côte à côte.
 - 💾 Sauvegarde automatique dans le navigateur (`localStorage`).
 - 🔄 **Sauvegarde / restauration JSON** : exportez tout le CV (photo et
   personnalisation comprises) dans un fichier `.json` et réimportez-le plus tard
