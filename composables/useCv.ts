@@ -91,6 +91,7 @@ export function useCv() {
     cv.value = {
       fullName: '',
       title: '',
+      photo: '',
       email: '',
       phone: '',
       location: '',

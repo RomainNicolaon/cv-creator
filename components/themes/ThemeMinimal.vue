@@ -6,21 +6,24 @@ defineProps<{ cv: CvData }>()
 
 <template>
   <div class="cv-page theme-minimal">
-    <header class="head">
-      <h1>{{ cv.fullName }}</h1>
-      <p v-if="cv.title" class="title">{{ cv.title }}</p>
-      <p class="contact">
-        <template v-for="(item, i) in [cv.email, cv.phone, cv.location, cv.website].filter(Boolean)" :key="i">
-          <span>{{ item }}</span>
-          <span v-if="i < [cv.email, cv.phone, cv.location, cv.website].filter(Boolean).length - 1" class="sep">/</span>
-        </template>
-      </p>
-      <p v-if="cv.links.length" class="contact">
-        <template v-for="(l, i) in cv.links" :key="i">
-          <span>{{ l.url }}</span>
-          <span v-if="i < cv.links.length - 1" class="sep">/</span>
-        </template>
-      </p>
+    <header class="head" :class="{ 'has-photo': cv.photo }">
+      <div class="head-text">
+        <h1>{{ cv.fullName }}</h1>
+        <p v-if="cv.title" class="title">{{ cv.title }}</p>
+        <p class="contact">
+          <template v-for="(item, i) in [cv.email, cv.phone, cv.location, cv.website].filter(Boolean)" :key="i">
+            <span>{{ item }}</span>
+            <span v-if="i < [cv.email, cv.phone, cv.location, cv.website].filter(Boolean).length - 1" class="sep">/</span>
+          </template>
+        </p>
+        <p v-if="cv.links.length" class="contact">
+          <template v-for="(l, i) in cv.links" :key="i">
+            <span>{{ l.url }}</span>
+            <span v-if="i < cv.links.length - 1" class="sep">/</span>
+          </template>
+        </p>
+      </div>
+      <img v-if="cv.photo" class="photo" :src="cv.photo" alt="Photo de profil" />
     </header>
 
     <section v-if="cv.summary" class="block">
@@ -101,6 +104,26 @@ defineProps<{ cv: CvData }>()
 
 .head {
   margin-bottom: 14pt;
+}
+
+.head.has-photo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12pt;
+}
+
+.head .head-text {
+  flex: 1;
+}
+
+.head .photo {
+  width: 28mm;
+  height: 28mm;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #e4e4e7;
 }
 
 .head h1 {

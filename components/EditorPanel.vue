@@ -11,6 +11,40 @@ import {
 
 const { cv } = useCv()
 
+const photoInput = ref<HTMLInputElement | null>(null)
+const photoError = ref('')
+
+const MAX_PHOTO_BYTES = 3 * 1024 * 1024 // 3 MB
+
+function onPhotoChange(event: Event) {
+  photoError.value = ''
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    photoError.value = 'Veuillez choisir un fichier image.'
+    return
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    photoError.value = "L'image est trop lourde (max 3 Mo)."
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = () => {
+    cv.value.photo = String(reader.result)
+  }
+  reader.onerror = () => {
+    photoError.value = "Impossible de lire l'image."
+  }
+  reader.readAsDataURL(file)
+}
+
+function removePhoto() {
+  cv.value.photo = ''
+  photoError.value = ''
+  if (photoInput.value) photoInput.value.value = ''
+}
+
 function splitCsv(value: string): string[] {
   return value
     .split(',')
@@ -54,6 +88,36 @@ const open = reactive<Record<string, boolean>>({
           <span>Titre / poste</span>
           <input v-model="cv.title" type="text" />
         </label>
+        <div class="field col-span-2">
+          <span>Photo de profil</span>
+          <div class="photo-row">
+            <div class="photo-preview">
+              <img v-if="cv.photo" :src="cv.photo" alt="Aperçu de la photo" />
+              <span v-else class="photo-placeholder">Aucune</span>
+            </div>
+            <div class="photo-actions">
+              <input
+                ref="photoInput"
+                type="file"
+                accept="image/*"
+                class="photo-file"
+                @change="onPhotoChange"
+              />
+              <button
+                v-if="cv.photo"
+                type="button"
+                class="remove"
+                @click="removePhoto"
+              >
+                Retirer la photo
+              </button>
+              <p class="photo-hint">
+                JPG ou PNG, max 3 Mo. Idéalement carrée.
+              </p>
+              <p v-if="photoError" class="photo-error">{{ photoError }}</p>
+            </div>
+          </div>
+        </div>
         <label class="field">
           <span>Email</span>
           <input v-model="cv.email" type="email" />
@@ -255,5 +319,37 @@ const open = reactive<Record<string, boolean>>({
 
 .remove {
   @apply text-xs text-red-400 hover:text-red-300;
+}
+
+.photo-row {
+  @apply flex items-center gap-3;
+}
+
+.photo-preview {
+  @apply flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-600 bg-gray-900;
+}
+
+.photo-preview img {
+  @apply h-full w-full object-cover;
+}
+
+.photo-placeholder {
+  @apply text-[10px] text-gray-500;
+}
+
+.photo-actions {
+  @apply flex flex-1 flex-col gap-1;
+}
+
+.photo-file {
+  @apply w-full text-xs text-gray-400 file:mr-2 file:cursor-pointer file:rounded-md file:border-0 file:bg-blue-600 file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-blue-500;
+}
+
+.photo-hint {
+  @apply text-[10px] text-gray-500;
+}
+
+.photo-error {
+  @apply text-[10px] text-red-400;
 }
 </style>

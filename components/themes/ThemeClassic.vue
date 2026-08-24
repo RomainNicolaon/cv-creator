@@ -7,6 +7,7 @@ defineProps<{ cv: CvData }>()
 <template>
   <div class="cv-page theme-classic">
     <header class="head">
+      <img v-if="cv.photo" class="photo" :src="cv.photo" alt="Photo de profil" />
       <h1>{{ cv.fullName }}</h1>
       <p v-if="cv.title" class="title">{{ cv.title }}</p>
       <p class="contact">
@@ -104,6 +105,16 @@ defineProps<{ cv: CvData }>()
   font-weight: 700;
   letter-spacing: 0.5pt;
   margin: 0;
+}
+
+.photo {
+  width: 28mm;
+  height: 28mm;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 6pt;
+  display: block;
+  border: 1px solid #d1d5db;
 }
 
 .title {

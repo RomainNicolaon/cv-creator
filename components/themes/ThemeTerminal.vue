@@ -6,19 +6,22 @@ defineProps<{ cv: CvData }>()
 
 <template>
   <div class="cv-page theme-terminal">
-    <header class="head">
-      <p class="prompt"><span class="green">romain@cv</span>:<span class="blue">~</span>$ whoami</p>
-      <h1>{{ cv.fullName }}</h1>
-      <p v-if="cv.title" class="title"># {{ cv.title }}</p>
-      <p class="contact">
-        <span v-if="cv.email">✉ {{ cv.email }}</span>
-        <span v-if="cv.phone">☎ {{ cv.phone }}</span>
-        <span v-if="cv.location">⌂ {{ cv.location }}</span>
-        <span v-if="cv.website">↗ {{ cv.website }}</span>
-      </p>
-      <p v-if="cv.links.length" class="contact">
-        <span v-for="(l, i) in cv.links" :key="i">{{ l.label }}: {{ l.url }}</span>
-      </p>
+    <header class="head" :class="{ 'has-photo': cv.photo }">
+      <img v-if="cv.photo" class="photo" :src="cv.photo" alt="Photo de profil" />
+      <div class="head-text">
+        <p class="prompt"><span class="green">romain@cv</span>:<span class="blue">~</span>$ whoami</p>
+        <h1>{{ cv.fullName }}</h1>
+        <p v-if="cv.title" class="title"># {{ cv.title }}</p>
+        <p class="contact">
+          <span v-if="cv.email">✉ {{ cv.email }}</span>
+          <span v-if="cv.phone">☎ {{ cv.phone }}</span>
+          <span v-if="cv.location">⌂ {{ cv.location }}</span>
+          <span v-if="cv.website">↗ {{ cv.website }}</span>
+        </p>
+        <p v-if="cv.links.length" class="contact">
+          <span v-for="(l, i) in cv.links" :key="i">{{ l.label }}: {{ l.url }}</span>
+        </p>
+      </div>
     </header>
 
     <section v-if="cv.summary" class="block">
@@ -103,6 +106,25 @@ defineProps<{ cv: CvData }>()
 
 .head {
   margin-bottom: 12pt;
+}
+
+.head.has-photo {
+  display: flex;
+  align-items: center;
+  gap: 10pt;
+}
+
+.head .head-text {
+  flex: 1;
+}
+
+.head .photo {
+  width: 24mm;
+  height: 24mm;
+  border-radius: 4pt;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #30363d;
 }
 
 .prompt {

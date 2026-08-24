@@ -4,6 +4,21 @@ import { useCv } from '~/composables/useCv'
 
 const { cv, theme, load, reset, clear } = useCv()
 
+// Group themes by their `group` label for the picker, preserving order.
+const themeGroups = computed(() => {
+  const groups: { name: string; items: typeof themes }[] = []
+  for (const t of themes) {
+    const name = t.group ?? 'Autres'
+    let group = groups.find((g) => g.name === name)
+    if (!group) {
+      group = { name, items: [] }
+      groups.push(group)
+    }
+    group.items.push(t)
+  }
+  return groups
+})
+
 const previewWrap = ref<HTMLElement | null>(null)
 const scale = ref(1)
 const A4_WIDTH_PX = 794 // 210mm @ 96dpi
@@ -90,24 +105,29 @@ onBeforeUnmount(() => {
 
     <!-- Theme picker -->
     <div
-      class="no-print flex items-center gap-3 overflow-x-auto border-b border-gray-800 bg-slate-900/70 px-5 py-2"
+      class="no-print flex items-center gap-4 overflow-x-auto border-b border-gray-800 bg-slate-900/70 px-5 py-2"
     >
-      <span class="text-xs font-medium uppercase tracking-wide text-gray-500">Thème</span>
-      <button
-        v-for="t in themes"
-        :key="t.id"
-        class="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
-        :class="
-          theme === t.id
-            ? 'border-blue-500 bg-blue-500/10 text-white'
-            : 'border-gray-700 text-gray-300 hover:border-gray-500'
-        "
-        :title="t.description"
-        @click="theme = t.id"
-      >
-        <span class="h-3 w-3 rounded-full" :style="{ background: t.accent }" />
-        {{ t.name }}
-      </button>
+      <span class="shrink-0 text-xs font-medium uppercase tracking-wide text-gray-500">Thème</span>
+      <div v-for="group in themeGroups" :key="group.name" class="flex shrink-0 items-center gap-2">
+        <span class="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-gray-600">
+          {{ group.name }}
+        </span>
+        <button
+          v-for="t in group.items"
+          :key="t.id"
+          class="flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
+          :class="
+            theme === t.id
+              ? 'border-blue-500 bg-blue-500/10 text-white'
+              : 'border-gray-700 text-gray-300 hover:border-gray-500'
+          "
+          :title="t.description"
+          @click="theme = t.id"
+        >
+          <span class="h-3 w-3 rounded-full" :style="{ background: t.accent }" />
+          {{ t.name }}
+        </button>
+      </div>
     </div>
 
     <!-- Main -->

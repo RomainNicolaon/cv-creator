@@ -7,6 +7,7 @@ import type { CvData } from '~/types/cv'
 export const defaultCv: CvData = {
   fullName: 'Romain NICOLAON',
   title: 'Développeur Full-Stack',
+  photo: '',
   email: 'nicolaon.romain@gmail.com',
   phone: '',
   location: 'Bourges, France',

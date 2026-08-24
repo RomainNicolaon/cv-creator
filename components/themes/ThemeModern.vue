@@ -1,13 +1,38 @@
 <script setup lang="ts">
-import type { CvData } from '~/types/cv'
+import type { CvData, ModernVariant } from '~/types/cv'
+import { modernVariants } from '~/constants/modernVariants'
 
-defineProps<{ cv: CvData }>()
+const props = withDefaults(
+  defineProps<{ cv: CvData; variant?: ModernVariant }>(),
+  { variant: () => modernVariants.modern },
+)
+
+const v = computed(() => props.variant)
+
+const vars = computed(() => ({
+  '--m-sidebar-bg': v.value.sidebarBg,
+  '--m-sidebar-accent': v.value.sidebarAccent,
+  '--m-sidebar-text': v.value.sidebarText,
+  '--m-sidebar-muted': v.value.sidebarMuted,
+  '--m-sidebar-border': v.value.sidebarBorder,
+  '--m-sidebar-heading': v.value.sidebarHeading,
+  '--m-label': v.value.labelColor,
+  '--m-heading': v.value.headingColor,
+  '--m-bar': v.value.barColor,
+}))
 </script>
 
 <template>
-  <div class="cv-page theme-modern">
+  <div
+    class="cv-page theme-modern"
+    :class="{ 'sidebar-right': v.side === 'right' }"
+    :style="vars"
+  >
     <aside class="sidebar">
-      <div class="avatar">{{ (cv.fullName || '?').charAt(0) }}</div>
+      <div v-if="cv.photo" class="avatar avatar-photo">
+        <img :src="cv.photo" alt="Photo de profil" />
+      </div>
+      <div v-else class="avatar">{{ (cv.fullName || '?').charAt(0) }}</div>
       <h1>{{ cv.fullName }}</h1>
       <p v-if="cv.title" class="title">{{ cv.title }}</p>
 
@@ -106,9 +131,17 @@ defineProps<{ cv: CvData }>()
   color: #1f2937;
 }
 
+.theme-modern.sidebar-right {
+  grid-template-columns: 1fr 62mm;
+}
+
+.theme-modern.sidebar-right .sidebar {
+  order: 2;
+}
+
 .sidebar {
-  background: #1e3a8a;
-  color: #e0e7ff;
+  background: var(--m-sidebar-bg);
+  color: var(--m-sidebar-text);
   padding: 14mm 9mm;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
@@ -118,7 +151,7 @@ defineProps<{ cv: CvData }>()
   width: 26mm;
   height: 26mm;
   border-radius: 50%;
-  background: #2563eb;
+  background: var(--m-sidebar-accent);
   color: #fff;
   display: flex;
   align-items: center;
@@ -126,8 +159,19 @@ defineProps<{ cv: CvData }>()
   font-size: 24pt;
   font-weight: 700;
   margin: 0 auto 8pt;
+  overflow: hidden;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
+}
+
+.avatar-photo {
+  background: #fff;
+}
+
+.avatar-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .sidebar h1 {
@@ -141,7 +185,7 @@ defineProps<{ cv: CvData }>()
 .title {
   text-align: center;
   font-size: 9.5pt;
-  color: #bfdbfe;
+  color: var(--m-sidebar-muted);
   margin: 2pt 0 10pt;
 }
 
@@ -153,8 +197,8 @@ defineProps<{ cv: CvData }>()
   font-size: 8.5pt;
   text-transform: uppercase;
   letter-spacing: 1.5pt;
-  color: #93c5fd;
-  border-bottom: 1px solid #3b5bb7;
+  color: var(--m-sidebar-heading);
+  border-bottom: 1px solid var(--m-sidebar-border);
   padding-bottom: 2pt;
   margin: 0 0 4pt;
 }
@@ -171,7 +215,7 @@ defineProps<{ cv: CvData }>()
 
 .l-label {
   font-weight: 600;
-  color: #fff;
+  color: var(--m-label);
 }
 
 .main {
@@ -185,7 +229,7 @@ defineProps<{ cv: CvData }>()
 h2 {
   font-size: 12pt;
   font-weight: 700;
-  color: #1e3a8a;
+  color: var(--m-heading);
   text-transform: uppercase;
   letter-spacing: 0.5pt;
   margin: 0 0 6pt;
@@ -200,7 +244,7 @@ h2::before {
   top: 1pt;
   bottom: 1pt;
   width: 3pt;
-  background: #2563eb;
+  background: var(--m-bar);
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
