@@ -10,6 +10,7 @@ import type {
   ThemeId,
 } from '~/types/cv'
 import { defaultCv } from '~/data/defaultCv'
+import { defaultSettings } from '~/constants/sections'
 
 const STORAGE_KEY = 'cv-creator:data'
 const THEME_KEY = 'cv-creator:theme'
@@ -103,6 +104,7 @@ export function useCv() {
       skills: [],
       projects: [],
       languages: [],
+      settings: defaultSettings(),
     }
   }
 

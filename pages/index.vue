@@ -8,6 +8,7 @@ const { exportJson, importJson } = useCvIo()
 
 const jsonInput = ref<HTMLInputElement | null>(null)
 const toast = ref('')
+const editorTab = ref<'content' | 'style'>('content')
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 function showToast(message: string) {
@@ -191,9 +192,32 @@ onBeforeUnmount(() => {
     <div class="flex min-h-0 flex-1">
       <!-- Editor -->
       <aside
-        class="no-print w-full max-w-md shrink-0 overflow-y-auto border-r border-gray-800 bg-slate-900 p-4"
+        class="no-print flex w-full max-w-md shrink-0 flex-col overflow-hidden border-r border-gray-800 bg-slate-900"
       >
-        <EditorPanel />
+        <div class="flex shrink-0 border-b border-gray-800">
+          <button
+            class="flex-1 px-4 py-2.5 text-sm font-medium transition-colors"
+            :class="editorTab === 'content'
+              ? 'border-b-2 border-blue-500 text-white'
+              : 'text-gray-400 hover:text-gray-200'"
+            @click="editorTab = 'content'"
+          >
+            Contenu
+          </button>
+          <button
+            class="flex-1 px-4 py-2.5 text-sm font-medium transition-colors"
+            :class="editorTab === 'style'
+              ? 'border-b-2 border-blue-500 text-white'
+              : 'text-gray-400 hover:text-gray-200'"
+            @click="editorTab = 'style'"
+          >
+            Style
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4">
+          <EditorPanel v-show="editorTab === 'content'" />
+          <CustomizePanel v-show="editorTab === 'style'" />
+        </div>
       </aside>
 
       <!-- Preview -->

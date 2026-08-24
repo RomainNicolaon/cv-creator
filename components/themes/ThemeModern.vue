@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { CvData, ModernVariant } from '~/types/cv'
+import CvPhoto from '~/components/CvPhoto.vue'
 import { modernVariants } from '~/constants/modernVariants'
+import { SECTION_LABELS } from '~/constants/sections'
+import { useThemeStyle, withSettingsDefaults } from '~/composables/useThemeStyle'
 
 const props = withDefaults(
   defineProps<{ cv: CvData; variant?: ModernVariant }>(),
@@ -8,29 +11,44 @@ const props = withDefaults(
 )
 
 const v = computed(() => props.variant)
+const settings = computed(() => withSettingsDefaults(props.cv.settings))
 
-const vars = computed(() => ({
-  '--m-sidebar-bg': v.value.sidebarBg,
-  '--m-sidebar-accent': v.value.sidebarAccent,
-  '--m-sidebar-text': v.value.sidebarText,
-  '--m-sidebar-muted': v.value.sidebarMuted,
-  '--m-sidebar-border': v.value.sidebarBorder,
-  '--m-sidebar-heading': v.value.sidebarHeading,
-  '--m-label': v.value.labelColor,
-  '--m-heading': v.value.headingColor,
-  '--m-bar': v.value.barColor,
-}))
+const { rootStyle, mainSections, sidebarSections } = useThemeStyle(
+  () => settings.value,
+  { baseFontPt: 9.5, defaultAccent: v.value.headingColor },
+)
+
+// A custom accent overrides the variant's heading / bar / avatar colors.
+const vars = computed(() => {
+  const accent = settings.value.accentColor
+  return {
+    '--m-sidebar-bg': v.value.sidebarBg,
+    '--m-sidebar-accent': accent || v.value.sidebarAccent,
+    '--m-sidebar-text': v.value.sidebarText,
+    '--m-sidebar-muted': v.value.sidebarMuted,
+    '--m-sidebar-border': v.value.sidebarBorder,
+    '--m-sidebar-heading': v.value.sidebarHeading,
+    '--m-label': v.value.labelColor,
+    '--m-heading': accent || v.value.headingColor,
+    '--m-bar': accent || v.value.barColor,
+  }
+})
 </script>
 
 <template>
   <div
     class="cv-page theme-modern"
     :class="{ 'sidebar-right': v.side === 'right' }"
-    :style="vars"
+    :style="[rootStyle, vars]"
   >
     <aside class="sidebar">
       <div v-if="cv.photo" class="avatar avatar-photo">
-        <img :src="cv.photo" alt="Photo de profil" />
+        <CvPhoto
+          :photo="cv.photo"
+          :zoom="settings.photoZoom"
+          :offset-x="settings.photoOffsetX"
+          :offset-y="settings.photoOffsetY"
+        />
       </div>
       <div v-else class="avatar">{{ (cv.fullName || '?').charAt(0) }}</div>
       <h1>{{ cv.fullName }}</h1>
@@ -51,72 +69,76 @@ const vars = computed(() => ({
         </p>
       </div>
 
-      <div v-if="cv.skills.length" class="side-block">
-        <h3>Compétences</h3>
-        <div v-for="(g, i) in cv.skills" :key="i" class="side-skill">
-          <p class="l-label">{{ g.category }}</p>
-          <p>{{ g.items.join(', ') }}</p>
+      <template v-for="sec in sidebarSections" :key="sec">
+        <div v-if="sec === 'skills' && cv.skills.length" class="side-block">
+          <h3>{{ SECTION_LABELS.skills }}</h3>
+          <div v-for="(g, i) in cv.skills" :key="i" class="side-skill">
+            <p class="l-label">{{ g.category }}</p>
+            <p>{{ g.items.join(', ') }}</p>
+          </div>
         </div>
-      </div>
 
-      <div v-if="cv.languages.length" class="side-block">
-        <h3>Langues</h3>
-        <p v-for="(lang, i) in cv.languages" :key="i">
-          <span class="l-label">{{ lang.name }}</span>
-          <template v-if="lang.level"> — {{ lang.level }}</template>
-        </p>
-      </div>
+        <div v-else-if="sec === 'languages' && cv.languages.length" class="side-block">
+          <h3>{{ SECTION_LABELS.languages }}</h3>
+          <p v-for="(lang, i) in cv.languages" :key="i">
+            <span class="l-label">{{ lang.name }}</span>
+            <template v-if="lang.level"> — {{ lang.level }}</template>
+          </p>
+        </div>
+      </template>
     </aside>
 
     <main class="main">
-      <section v-if="cv.summary" class="block">
-        <h2>Profil</h2>
-        <p class="summary">{{ cv.summary }}</p>
-      </section>
+      <template v-for="sec in mainSections" :key="sec">
+        <section v-if="sec === 'summary' && cv.summary" class="block">
+          <h2>{{ SECTION_LABELS.summary }}</h2>
+          <p class="summary">{{ cv.summary }}</p>
+        </section>
 
-      <section v-if="cv.experiences.length" class="block">
-        <h2>Expériences</h2>
-        <article v-for="(x, i) in cv.experiences" :key="i" class="entry">
-          <div class="entry-head">
-            <span class="role">{{ x.role }}</span>
-            <span class="period">{{ x.period }}</span>
-          </div>
-          <p class="sub">
-            <template v-if="x.company">{{ x.company }}</template>
-            <template v-if="x.company && x.location"> · </template>
-            <template v-if="x.location">{{ x.location }}</template>
-          </p>
-          <p v-if="x.description" class="desc">{{ x.description }}</p>
-          <ul v-if="x.highlights.length">
-            <li v-for="(h, hi) in x.highlights" :key="hi">{{ h }}</li>
-          </ul>
-        </article>
-      </section>
+        <section v-else-if="sec === 'experiences' && cv.experiences.length" class="block">
+          <h2>{{ SECTION_LABELS.experiences }}</h2>
+          <article v-for="(x, i) in cv.experiences" :key="i" class="entry">
+            <div class="entry-head">
+              <span class="role">{{ x.role }}</span>
+              <span class="period">{{ x.period }}</span>
+            </div>
+            <p class="sub">
+              <template v-if="x.company">{{ x.company }}</template>
+              <template v-if="x.company && x.location"> · </template>
+              <template v-if="x.location">{{ x.location }}</template>
+            </p>
+            <p v-if="x.description" class="desc">{{ x.description }}</p>
+            <ul v-if="x.highlights.length">
+              <li v-for="(h, hi) in x.highlights" :key="hi">{{ h }}</li>
+            </ul>
+          </article>
+        </section>
 
-      <section v-if="cv.projects.length" class="block">
-        <h2>Projets</h2>
-        <article v-for="(p, i) in cv.projects" :key="i" class="entry">
-          <div class="entry-head">
-            <span class="role">{{ p.name }}</span>
-            <span class="period">{{ p.year }}</span>
-          </div>
-          <p v-if="p.description" class="desc">{{ p.description }}</p>
-          <p v-if="p.tags.length" class="sub">{{ p.tags.join(' · ') }}</p>
-          <p v-if="p.url" class="sub">{{ p.url }}</p>
-        </article>
-      </section>
+        <section v-else-if="sec === 'projects' && cv.projects.length" class="block">
+          <h2>{{ SECTION_LABELS.projects }}</h2>
+          <article v-for="(p, i) in cv.projects" :key="i" class="entry">
+            <div class="entry-head">
+              <span class="role">{{ p.name }}</span>
+              <span class="period">{{ p.year }}</span>
+            </div>
+            <p v-if="p.description" class="desc">{{ p.description }}</p>
+            <p v-if="p.tags.length" class="sub">{{ p.tags.join(' · ') }}</p>
+            <p v-if="p.url" class="sub">{{ p.url }}</p>
+          </article>
+        </section>
 
-      <section v-if="cv.education.length" class="block">
-        <h2>Formation</h2>
-        <article v-for="(e, i) in cv.education" :key="i" class="entry">
-          <div class="entry-head">
-            <span class="role">{{ e.degree }}</span>
-            <span class="period">{{ e.period }}</span>
-          </div>
-          <p v-if="e.school" class="sub">{{ e.school }}</p>
-          <p v-if="e.description" class="desc">{{ e.description }}</p>
-        </article>
-      </section>
+        <section v-else-if="sec === 'education' && cv.education.length" class="block">
+          <h2>{{ SECTION_LABELS.education }}</h2>
+          <article v-for="(e, i) in cv.education" :key="i" class="entry">
+            <div class="entry-head">
+              <span class="role">{{ e.degree }}</span>
+              <span class="period">{{ e.period }}</span>
+            </div>
+            <p v-if="e.school" class="sub">{{ e.school }}</p>
+            <p v-if="e.description" class="desc">{{ e.description }}</p>
+          </article>
+        </section>
+      </template>
     </main>
   </div>
 </template>
@@ -126,7 +148,6 @@ const vars = computed(() => ({
   display: grid;
   grid-template-columns: 62mm 1fr;
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 9.5pt;
   line-height: 1.45;
   color: #1f2937;
 }
@@ -142,7 +163,7 @@ const vars = computed(() => ({
 .sidebar {
   background: var(--m-sidebar-bg);
   color: var(--m-sidebar-text);
-  padding: 14mm 9mm;
+  padding: calc(var(--cv-sp, 1) * 14mm) 9mm;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -156,7 +177,7 @@ const vars = computed(() => ({
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24pt;
+  font-size: 2.5em;
   font-weight: 700;
   margin: 0 auto 8pt;
   overflow: hidden;
@@ -168,14 +189,8 @@ const vars = computed(() => ({
   background: #fff;
 }
 
-.avatar-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .sidebar h1 {
-  font-size: 15pt;
+  font-size: 1.58em;
   font-weight: 700;
   text-align: center;
   margin: 0;
@@ -184,17 +199,17 @@ const vars = computed(() => ({
 
 .title {
   text-align: center;
-  font-size: 9.5pt;
+  font-size: 1em;
   color: var(--m-sidebar-muted);
   margin: 2pt 0 10pt;
 }
 
 .side-block {
-  margin-bottom: 10pt;
+  margin-bottom: calc(var(--cv-sp, 1) * 10pt);
 }
 
 .side-block h3 {
-  font-size: 8.5pt;
+  font-size: 0.89em;
   text-transform: uppercase;
   letter-spacing: 1.5pt;
   color: var(--m-sidebar-heading);
@@ -205,7 +220,7 @@ const vars = computed(() => ({
 
 .side-block p {
   margin: 0 0 3pt;
-  font-size: 8.5pt;
+  font-size: 0.89em;
   word-break: break-word;
 }
 
@@ -219,15 +234,15 @@ const vars = computed(() => ({
 }
 
 .main {
-  padding: 14mm 12mm;
+  padding: calc(var(--cv-sp, 1) * 14mm) 12mm;
 }
 
 .block {
-  margin-bottom: 11pt;
+  margin-bottom: calc(var(--cv-sp, 1) * 11pt);
 }
 
 h2 {
-  font-size: 12pt;
+  font-size: 1.26em;
   font-weight: 700;
   color: var(--m-heading);
   text-transform: uppercase;
@@ -255,7 +270,7 @@ h2::before {
 }
 
 .entry {
-  margin-bottom: 8pt;
+  margin-bottom: calc(var(--cv-sp, 1) * 8pt);
 }
 
 .entry-head {
@@ -267,17 +282,17 @@ h2::before {
 
 .role {
   font-weight: 700;
-  font-size: 10.5pt;
+  font-size: 1.1em;
 }
 
 .period {
-  font-size: 8.5pt;
+  font-size: 0.89em;
   color: #6b7280;
   white-space: nowrap;
 }
 
 .sub {
-  font-size: 8.5pt;
+  font-size: 0.89em;
   color: #6b7280;
   margin: 0;
 }

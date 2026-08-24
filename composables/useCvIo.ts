@@ -5,11 +5,13 @@ import type {
   CvLanguage,
   CvLink,
   CvProject,
+  CvSettings,
   CvSkillGroup,
   ThemeId,
 } from '~/types/cv'
 import { themes } from '~/constants/themes'
 import { useCv } from '~/composables/useCv'
+import { withSettingsDefaults } from '~/composables/useThemeStyle'
 
 const EXPORT_VERSION = 1
 
@@ -98,6 +100,7 @@ export function normalizeCv(input: unknown): CvData {
     skills: arr(o.skills, normalizeSkillGroup),
     projects: arr(o.projects, normalizeProject),
     languages: arr(o.languages, normalizeLanguage),
+    settings: withSettingsDefaults(o.settings as Partial<CvSettings> | undefined),
   }
 }
 

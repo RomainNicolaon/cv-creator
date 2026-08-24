@@ -37,6 +37,38 @@ export interface CvLanguage {
   level: string
 }
 
+/** Reorderable / hideable content sections. */
+export type SectionId =
+  | 'summary'
+  | 'experiences'
+  | 'projects'
+  | 'education'
+  | 'skills'
+  | 'languages'
+
+export type FontChoice = '' | 'sans' | 'serif' | 'mono'
+export type Density = 'compact' | 'normal' | 'comfortable'
+
+/** User customization that travels with the CV (exported in the JSON). */
+export interface CvSettings {
+  /** Order of the content sections. */
+  sectionOrder: SectionId[]
+  /** Sections the user has hidden. */
+  hidden: SectionId[]
+  /** Custom accent color (hex). Empty string = use the theme default. */
+  accentColor: string
+  /** Font family override. Empty string = use the theme default. */
+  fontFamily: FontChoice
+  /** Vertical rhythm / size preset. */
+  density: Density
+  /** Profile picture zoom factor (1 = fit). */
+  photoZoom: number
+  /** Horizontal focus point in percent (0–100, 50 = center). */
+  photoOffsetX: number
+  /** Vertical focus point in percent (0–100, 50 = center). */
+  photoOffsetY: number
+}
+
 export interface CvData {
   fullName: string
   title: string
@@ -53,6 +85,7 @@ export interface CvData {
   skills: CvSkillGroup[]
   projects: CvProject[]
   languages: CvLanguage[]
+  settings: CvSettings
 }
 
 export type ModernVariantId =

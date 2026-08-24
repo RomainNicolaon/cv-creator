@@ -1,4 +1,5 @@
 import type { CvData } from '~/types/cv'
+import { defaultSettings } from '~/constants/sections'
 
 /**
  * Données par défaut du CV, reprises du portfolio de Romain Nicolaon.
@@ -133,4 +134,5 @@ export const defaultCv: CvData = {
     { name: 'Français', level: 'Langue maternelle' },
     { name: 'Anglais', level: 'Professionnel' },
   ],
+  settings: defaultSettings(),
 }

@@ -1,0 +1,106 @@
+# Déploiement O2Switch (cPanel) via rsync/SSH.
+#
+# Secrets requis :
+#   CPANEL_USERNAME   Utilisateur cPanel O2Switch
+#   CPANEL_API_TOKEN  Token API cPanel (cPanel > Gérer les jetons API)
+#   CPANEL_SERVER     Hôte du serveur cPanel (ex: xxx.o2switch.net)
+#   SSH_KEY           Clé privée SSH autorisée sur le compte cPanel
+#   DEPLOY_PATH       Chemin absolu de l'app sur le serveur
+#                     (ex: /home/<user>/nodeapp)
+#   SSH_PORT          (optionnel) Port SSH, 22 par défaut
+
+name: Deploy to O2Switch
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: deploy-o2switch
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build
+    uses: ./.github/workflows/build.yml
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: .output
+
+      - name: Get runner public IP
+        id: ip
+        run: echo "ipv4=$(curl -sf https://api.ipify.org || curl -sf https://ipv4.icanhazip.com)" >> "$GITHUB_OUTPUT"
+
+      - name: Clear stale whitelist entries
+        run: |
+          curl -sm 45 -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+            "https://${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/remove_all" || true
+
+      - name: Whitelist runner IP
+        run: |
+          curl -sm 45 -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+            "https://${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/add?address=${{ steps.ip.outputs.ipv4 }}&port=22"
+
+      - name: Verify runner IP is whitelisted
+        run: |
+          curl -sm 45 -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+            "https://${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/list" | grep "${{ steps.ip.outputs.ipv4 }}"
+
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+
+      - name: Deploy with rsync
+        run: |
+          attempt=0
+          max_attempts=3
+          until rsync --timeout=180 --partial --compress \
+            -e "ssh -p ${{ secrets.SSH_PORT || '22' }} -o StrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=8 -i ~/.ssh/id_rsa" \
+            --exclude=".git" --exclude=".htaccess" --exclude=".env" \
+            --exclude="node_modules" --exclude="uploads" --exclude="logs" \
+            -av --delete .output/ \
+            "${{ secrets.CPANEL_USERNAME }}@${{ secrets.CPANEL_SERVER }}:/home/${{ secrets.CPANEL_USERNAME }}/${{ secrets.DEPLOY_PATH }}"; do
+            attempt=$((attempt + 1))
+            if [ "$attempt" -ge "$max_attempts" ]; then
+              echo "rsync a échoué après $max_attempts tentatives." >&2
+              exit 1
+            fi
+            echo "rsync a échoué (tentative $attempt/$max_attempts), nouvelle tentative dans 15 s…" >&2
+            sleep 15
+          done
+
+      - name: Clean SSH keys
+        if: always()
+        run: rm -rf ~/.ssh
+
+      - name: Remove runner IP from whitelist
+        if: always() && steps.ip.outputs.ipv4 != ''
+        run: |
+          for dir in in out; do
+            curl -sm 45 -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+              "https://${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/remove?address=${{ steps.ip.outputs.ipv4 }}&port=22&direction=$dir" || true
+          done
+
+      - name: Clean artifact
+        uses: geekyeggo/delete-artifact@v5
+        if: always()
+        with:
+          name: build
+          failOnError: false

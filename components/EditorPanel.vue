@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CvPhoto from '~/components/CvPhoto.vue'
 import {
   emptyEducation,
   emptyExperience,
@@ -16,6 +17,12 @@ const photoError = ref('')
 
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024 // 3 MB
 
+function resetCrop() {
+  cv.value.settings.photoZoom = 1
+  cv.value.settings.photoOffsetX = 50
+  cv.value.settings.photoOffsetY = 50
+}
+
 function onPhotoChange(event: Event) {
   photoError.value = ''
   const input = event.target as HTMLInputElement
@@ -32,6 +39,7 @@ function onPhotoChange(event: Event) {
   const reader = new FileReader()
   reader.onload = () => {
     cv.value.photo = String(reader.result)
+    resetCrop()
   }
   reader.onerror = () => {
     photoError.value = "Impossible de lire l'image."
@@ -42,6 +50,7 @@ function onPhotoChange(event: Event) {
 function removePhoto() {
   cv.value.photo = ''
   photoError.value = ''
+  resetCrop()
   if (photoInput.value) photoInput.value.value = ''
 }
 
@@ -92,7 +101,14 @@ const open = reactive<Record<string, boolean>>({
           <span>Photo de profil</span>
           <div class="photo-row">
             <div class="photo-preview">
-              <img v-if="cv.photo" :src="cv.photo" alt="Aperçu de la photo" />
+              <CvPhoto
+                v-if="cv.photo"
+                :photo="cv.photo"
+                :zoom="cv.settings.photoZoom"
+                :offset-x="cv.settings.photoOffsetX"
+                :offset-y="cv.settings.photoOffsetY"
+                alt="Aperçu de la photo"
+              />
               <span v-else class="photo-placeholder">Aucune</span>
             </div>
             <div class="photo-actions">
@@ -116,6 +132,41 @@ const open = reactive<Record<string, boolean>>({
               </p>
               <p v-if="photoError" class="photo-error">{{ photoError }}</p>
             </div>
+          </div>
+          <div v-if="cv.photo" class="crop">
+            <label class="crop-row">
+              <span>Zoom</span>
+              <input
+                v-model.number="cv.settings.photoZoom"
+                type="range"
+                min="1"
+                max="3"
+                step="0.05"
+              />
+            </label>
+            <label class="crop-row">
+              <span>Horizontal</span>
+              <input
+                v-model.number="cv.settings.photoOffsetX"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+            </label>
+            <label class="crop-row">
+              <span>Vertical</span>
+              <input
+                v-model.number="cv.settings.photoOffsetY"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+              />
+            </label>
+            <button type="button" class="remove" @click="resetCrop">
+              Réinitialiser le cadrage
+            </button>
           </div>
         </div>
         <label class="field">
@@ -351,5 +402,21 @@ const open = reactive<Record<string, boolean>>({
 
 .photo-error {
   @apply text-[10px] text-red-400;
+}
+
+.crop {
+  @apply mt-3 space-y-1.5;
+}
+
+.crop-row {
+  @apply flex items-center gap-2 text-xs text-gray-400;
+}
+
+.crop-row > span {
+  @apply w-16 shrink-0;
+}
+
+.crop-row input[type='range'] {
+  @apply h-1.5 flex-1 cursor-pointer accent-blue-500;
 }
 </style>
