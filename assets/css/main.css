@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-bg: #0b1120;
+  --panel-bg: #111827;
+  --panel-border: #1f2937;
+}
+
+html,
+body,
+#__nuxt {
+  height: 100%;
+}
+
+body {
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  background: var(--app-bg);
+  color: #e5e7eb;
+}
+
+/* ---------- A4 sheet ---------- */
+.cv-page {
+  width: 210mm;
+  min-height: 297mm;
+  background: #ffffff;
+  color: #111827;
+  box-sizing: border-box;
+  margin: 0 auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* Fit-to-width scaling of the sheet on screen only. */
+.cv-scale {
+  transform: scale(var(--cv-scale, 1));
+  transform-origin: top center;
+}
+
+/* ---------- Print / PDF export ---------- */
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body,
+  #__nuxt {
+    height: auto;
+    background: #ffffff;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .cv-print-area,
+  .cv-print-area * {
+    visibility: visible;
+  }
+
+  .cv-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .cv-scale {
+    transform: none !important;
+  }
+
+  .cv-page {
+    margin: 0;
+    box-shadow: none;
+    min-height: 297mm;
+  }
+}

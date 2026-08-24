@@ -1,0 +1,24 @@
+{
+  "name": "cv-creator",
+  "private": true,
+  "type": "module",
+  "description": "Générateur de CV en PDF avec choix de thème et édition du contenu.",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "nuxt": "^3.14.1592",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.13.1",
+    "typescript": "^5.6.3",
+    "vue-tsc": "^2.1.10"
+  }
+}

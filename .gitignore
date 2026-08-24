@@ -1,0 +1,18 @@
+# Nuxt / Node
+node_modules
+.nuxt
+.output
+.data
+dist
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
