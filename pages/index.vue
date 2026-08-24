@@ -1,8 +1,41 @@
 <script setup lang="ts">
 import { themes } from '~/constants/themes'
 import { useCv } from '~/composables/useCv'
+import { useCvIo } from '~/composables/useCvIo'
 
 const { cv, theme, load, reset, clear } = useCv()
+const { exportJson, importJson } = useCvIo()
+
+const jsonInput = ref<HTMLInputElement | null>(null)
+const toast = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+function showToast(message: string) {
+  toast.value = message
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toast.value = ''
+  }, 3000)
+}
+
+function triggerImport() {
+  jsonInput.value?.click()
+}
+
+function onJsonFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    const result = importJson(String(reader.result))
+    showToast(result.ok ? 'CV importé ✓' : (result.error ?? 'Import échoué'))
+  }
+  reader.onerror = () => showToast("Impossible de lire le fichier")
+  reader.readAsText(file)
+  // Reset so importing the same file again re-triggers change.
+  input.value = ''
+}
 
 // Group themes by their `group` label for the picker, preserving order.
 const themeGroups = computed(() => {
@@ -62,6 +95,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   observer?.disconnect()
   window.removeEventListener('resize', updateScale)
+  if (toastTimer) clearTimeout(toastTimer)
 })
 </script>
 
@@ -82,6 +116,13 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="flex items-center gap-2">
+        <input
+          ref="jsonInput"
+          type="file"
+          accept="application/json,.json"
+          class="hidden"
+          @change="onJsonFile"
+        />
         <button
           class="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
           @click="confirmClear"
@@ -94,6 +135,22 @@ onBeforeUnmount(() => {
         >
           Réinitialiser
         </button>
+        <span class="mx-1 h-5 w-px bg-gray-700" />
+        <button
+          class="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
+          title="Importer un CV depuis un fichier JSON"
+          @click="triggerImport"
+        >
+          ⬆ Importer JSON
+        </button>
+        <button
+          class="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
+          title="Exporter le CV (avec photo) au format JSON"
+          @click="exportJson"
+        >
+          ⬇ Exporter JSON
+        </button>
+        <span class="mx-1 h-5 w-px bg-gray-700" />
         <button
           class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
           @click="downloadPdf"
@@ -149,6 +206,16 @@ onBeforeUnmount(() => {
         </ClientOnly>
       </main>
     </div>
+
+    <!-- Toast -->
+    <Transition name="toast">
+      <div
+        v-if="toast"
+        class="no-print pointer-events-none fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-md bg-slate-800 px-4 py-2 text-sm text-white shadow-lg ring-1 ring-white/10"
+      >
+        {{ toast }}
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -156,6 +223,19 @@ onBeforeUnmount(() => {
 .preview-pane {
   background-image: radial-gradient(circle, #334155 1px, transparent 1px);
   background-size: 22px 22px;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 8px);
 }
 
 @media print {

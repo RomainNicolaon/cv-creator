@@ -16,6 +16,8 @@ Petit générateur de CV en **PDF** construit avec **Nuxt 3**. Choisissez un th�
     (barre latérale à droite).
 - 👁️ Aperçu au format A4 mis à l'échelle en temps réel.
 - 💾 Sauvegarde automatique dans le navigateur (`localStorage`).
+- 🔄 **Sauvegarde / restauration JSON** : exportez tout le CV (photo comprise)
+  dans un fichier `.json` et réimportez-le plus tard ou sur une autre machine.
 - 🧾 Pré-rempli avec les données du portfolio (entièrement modifiable).
 - ⬇️ Export PDF via l'impression native (haute qualité, texte sélectionnable).
 
@@ -36,6 +38,15 @@ Ouvrez http://localhost:3000.
 4. Réglez les marges sur **« Aucune »** et activez **« Graphiques d'arrière-plan »**
    pour conserver les couleurs des thèmes Moderne / Terminal.
 
+## Sauvegarde & partage (JSON)
+
+- **⬇ Exporter JSON** télécharge un fichier `cv-<nom>-<date>.json` contenant
+  l'intégralité du CV (photo incluse) et le thème sélectionné.
+- **⬆ Importer JSON** recharge un fichier exporté (ou un objet CV brut). Les
+  données sont validées et normalisées : les champs manquants sont ignorés sans
+  planter, et une photo non valide est écartée. Un message confirme le succès
+  ou l'erreur.
+
 ## Scripts
 
 | Commande            | Description                        |
@@ -54,6 +65,7 @@ components/
   CvPreview.vue            # Sélection du thème + mise à l'échelle
   themes/                  # Un composant par famille de thème
 composables/useCv.ts       # État + persistance localStorage
+composables/useCvIo.ts     # Import / export JSON (+ normalisation)
 constants/themes.ts        # Registre des thèmes (picker)
 constants/modernVariants.ts # Palettes des variantes « Moderne »
 data/defaultCv.ts          # Données par défaut (portfolio)
